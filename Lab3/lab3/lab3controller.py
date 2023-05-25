@@ -23,27 +23,21 @@ class Firewall (object):
   def do_firewall (self, packet, packet_in):
     # The code in here will be executed for every packet.
     flow_mod = of.ofp_flow_mod()
-    # Set the match criteria for the flow
     flow_mod.match = of.ofp_match.from_packet(packet)
     actions = []
-    # Set the idle timeout for the flow (in seconds)
     flow_mod.idle_timeout = 60
     flow_mod.hard_timeout = 60
     
-    
-    if packet.type == packet.ARP_TYPE:
+    if packet.find('ipv4') and packet.find('arp'): # arp packet
         log.debug("Allowing ARP packet")
         actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
         flow_mod.actions = actions
-    # Check if the packet is a TCP packet
-    if packet.find('tcp'):
+    elif packet.find('ipv4') and packet.find('tcp'): # tcp packet
         log.debug("Allowing TCP packet")
         actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
         flow_mod.actions = actions
         
     self.connection.send(flow_mod)
-    # For any other type of traffic, drop the packet
-    log.debug("Dropping packet")
 
 
 
