@@ -61,21 +61,140 @@ class Final (object):
     flow_mod.idle_timeout = 60
     flow_mod.hard_timeout = 60
     # block all IP traffic from Untrusted Host to Server
-    if switch_id == 1:
-      if port_on_switch == 9:
-        
-    # block all IP traffic from Untrusted Host to Server
-    # block all ICMP traffic from Untrusted Host to anywhere internally(host10-80 and server)'
-    # trusted host can send traffic to hosts in dept A(host10-40)
-    # 
-    if packet.find('icmp') and packet.find('arp'): # arp packet
-        log.debug("Allowing ARP packet")
-        actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
-        flow_mod.actions = actions
-    elif packet.find('ipv4') and packet.find('tcp'): # tcp packet
-        log.debug("Allowing TCP packet")
-        actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
-        flow_mod.actions = actions
+    # block all ICMP traffic from Untrusted Host to anywhere internally(host10-80 and server)
+    # trusted host can send traffic to hosts in dept A(host10-40) but not sent ICMP and IP traffic to server and hosts in dept B (host50-80)
+    # all ICMP traffic from Dept A to Dept B should be blocked and vice versa
+    # switch id ? 
+    
+    # server: 10.3.9.90/24
+    # trusted: 108.24.31.112/24
+    # untrusted: 106.44.82.103/24
+    # (switch, src_ip, dst_ip): src_port?
+    ip = packet.find('ipv4')
+    if ip is None:
+      actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
+      flow_mod.actions = actions
+      return
+    else:
+      #A
+      h10 = ['10.0.2.20/24', '10.0.3.30/24','10.0.4.40/24','108.24.31.112/24','10.3.9.90/24']
+      h20 = ['10.0.1.10/24', '10.0.3.30/24','10.0.4.40/24','108.24.31.112/24','10.3.9.90/24']
+      h30 = ['10.0.1.10/24', '10.0.2.20/24','10.0.4.40/24','108.24.31.112/24','10.3.9.90/24']
+      h40 = ['10.0.1.10/24', '10.0.2.20/24','10.0.3.30/24','108.24.31.112/24','10.3.9.90/24']
+
+      #B
+      h50 = ['10.0.6.60/24', '10.0.7.70/24','10.0.8.80/24','108.24.31.112/24']
+      h60 = ['10.0.5.50/24', '10.0.7.70/24','10.0.8.80/24','108.24.31.112/24']
+      h70 = ['10.0.5.50/24', '10.0.6.60/24','10.0.8.80/24','108.24.31.112/24']
+      h80 = ['10.0.5.50/24', '10.0.6.60/24','10.0.7.70/24','108.24.31.112/24']
+      
+      #h_trust = ['10.0.1.10/24', '10.0.2.20/24', '10.0.3.30/24','10.0.4.40/24']
+      #h_untrust = ['10.0.2.20/24', '10.0.3.30/24','10.0.4.40/24','108.24.31.112/24','10.3.9.90/24']
+
+      h_server = ['10.0.2.20/24', '10.0.3.30/24','10.0.4.40/24','108.24.31.112/24','10.3.9.90/24']
+      src_ip = ip.srcip
+      dst_ip = ip.dstip
+      
+      if switch_id == 1:
+        #log.debug("Allowing packet")
+        if dst_ip == '10.0.1.10/24':
+          actions.append(of.ofp_action_output(port=1))
+          flow_mod.actions = actions
+          return
+        elif dst_ip == '10.0.2.20/24':
+          actions.append(of.ofp_action_output(port=2))
+          flow_mod.actions = actions
+          return
+        elif (src_ip == '10.0.1.10/24' and dst_ip in h10) or (src_ip == '10.0.2.20/24' and dst_ip in h20):
+          actions.append(of.ofp_action_output(port=3))
+          flow_mod.actions = actions
+          return
+      elif switch_id == 2:
+        #log.debug("Allowing packet")
+        if dst_ip == '10.0.3.30/24':
+          actions.append(of.ofp_action_output(port=1))
+          flow_mod.actions = actions
+          return
+        elif dst_ip == '10.0.4.40/24':
+          actions.append(of.ofp_action_output(port=2))
+          flow_mod.actions = actions
+          return
+        elif (src_ip == '10.0.3.30/24' and dst_ip in h30) or (src_ip == '10.0.4.40/24' and dst_ip in h40):
+          actions.append(of.ofp_action_output(port=3))
+          flow_mod.actions = actions
+          return
+      elif switch_id == 3:
+        if dst_ip == '10.0.5.50/24':
+          actions.append(of.ofp_action_output(port=1))
+          flow_mod.actions = actions
+          return
+        elif dst_ip == '10.0.6.60/24':
+          actions.append(of.ofp_action_output(port=2))
+          flow_mod.actions = actions
+          return
+        elif (src_ip == '10.0.5.50/24' and dst_ip in h50) or (src_ip == '10.0.6.60/24' and dst_ip in h60):
+          actions.append(of.ofp_action_output(port=3))
+          flow_mod.actions = actions
+          return
+      elif switch_id == 4:
+        if dst_ip == '10.0.7.70/24':
+          actions.append(of.ofp_action_output(port=1))
+          flow_mod.actions = actions
+          return
+        elif dst_ip == '10.0.8.80/24':
+          actions.append(of.ofp_action_output(port=2))
+          flow_mod.actions = actions
+          return
+        elif (src_ip == '10.0.7.70/24' and dst_ip in h70) or (src_ip == '10.0.8.80/24' and dst_ip in h80):
+          actions.append(of.ofp_action_output(port=3))
+          flow_mod.actions = actions
+          return
+      elif switch_id == 5:
+        if src_ip != '106.44.82.103/24':
+          if dst_ip in ['10.0.1.10/24', '10.0.2.20/24']: # to s1
+            actions.append(of.ofp_action_output(port=1))
+            flow_mod.actions = actions
+            return
+          elif dst_ip in ['10.0.3.30/24','10.0.4.40/24']: # to s2
+            actions.append(of.ofp_action_output(port=2))
+            flow_mod.actions = actions
+            return
+          elif dst_ip in ['10.0.5.50/24', '10.0.6.60/24'] and (src_ip != '108.24.31.112/24'): # to s3
+            actions.append(of.ofp_action_output(port=3))
+            flow_mod.actions = actions
+            return
+          elif dst_ip in ['10.0.7.70/24','10.0.8.80/24'] and (src_ip != '108.24.31.112/24'): # to s4
+            actions.append(of.ofp_action_output(port=4))
+            flow_mod.actions = actions
+            return
+        if dst_ip == '108.24.31.112/24': # to trusted
+          actions.append(of.ofp_action_output(port=5))
+          flow_mod.actions = actions
+          return
+        elif dst_ip == '10.3.9.90/24': # to server
+          actions.append(of.ofp_action_output(port=7))
+          flow_mod.actions = actions
+          return
+      elif switch_id == 6:
+        if dst_ip == '10.3.9.90/24':
+          actions.append(of.ofp_action_output(port=2))
+          flow_mod.actions = actions
+          return
+        elif dst_ip in h_server: 
+          actions.append(of.ofp_action_output(port=1))
+          flow_mod.actions = actions
+          return
+      else:
+        return
+
+    # if packet.find('icmp') and packet.find('arp'): # arp packet
+    #     log.debug("Allowing ARP packet")
+    #     actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
+    #     flow_mod.actions = actions
+    # elif packet.find('ipv4') and packet.find('tcp'): # tcp packet
+    #     log.debug("Allowing TCP packet")
+    #     actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
+    #     flow_mod.actions = actions
 
   def _handle_PacketIn (self, event):
     """

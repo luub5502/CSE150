@@ -32,34 +32,41 @@ class final_topo(Topo):
     server = self.addHost('h_server',mac='00:00:00:00:00:11',ip='10.3.9.90/24', defaultRoute="h_server-eth0")
     # Create a switch. No changes here from Lab 1.
     # s1 = self.addSwitch('s1')
-    f1s1 = self.addSwitch('f1s1')
-    f1s2 = self.addSwitch('f1s2')
-    f2s1 = self.addSwitch('f2s1')
-    f2s2 = self.addSwitch('f2s2')
-    core = self.addSwitch('core')
-    dataCenter = self.addSwitch('dataCenter')
+    s1 = self.addSwitch('s1') # Floor 1 Switch 1
+    s2 = self.addSwitch('s2') # Floor 1 Switch 2
+    s3 = self.addSwitch('s3') # Floor 2 Switch 1
+    s4 = self.addSwitch('s4') # Floor 2 Switch 2
+    s5 = self.addSwitch('s5') # Core Switch
+    s6 = self.addSwitch('s6') # Data Center Switch
     # Connect Port 8 on the Switch to Port 0 on Host 1 and Port 9 on the Switch to Port 0 on 
     # Host 2. This is representing the physical port on the switch or host that you are 
     # connecting to.
-    #
-    self.addLink(core,dataCenter)
-    #floor 1 connections
-    self.addLink(h10, f1s1, port1 = 0, port2 = 8)
-    self.addLink(h20, f1s1, port1 = 0, port2 = 9)
-    self.addLink(core, f1s1)
-    self.addLink(h30, f1s2)
-    self.addLink(h40, f1s2)
-    self.addLink(core, f1s2)
-    #floor 2 connections 
-    self.addLink(h50, f2s1)
-    self.addLink(h60, f2s1)
-    self.addLink(core, f2s1)
-    self.addLink(h70, f2s2)
-    self.addLink(h80, f2s2)
-    self.addLink(core, f2s2)
 
-    self.addLink(core, trusted_host)
-    self.addLink(core, untrusted_host)
+    # server to data center switch
+    self.addLink(server, s6, port1 = 0, port2 = 2)
+
+    #floor 1 connections
+    self.addLink(h10, s1, port1 = 1, port2 = 1)
+    self.addLink(h20, s1, port1 = 1, port2 = 2)
+    self.addLink(h30, s2, port1 = 1, port2 = 1)
+    self.addLink(h40, s2, port1 = 1, port2 = 2)
+    
+    #floor 2 connections 
+    self.addLink(h50, s3, port1 = 1, port2 = 1)
+    self.addLink(h60, s3, port1 = 1, port2 = 2)
+    self.addLink(h70, s4, port1 = 1, port2 = 1)
+    self.addLink(h80, s4, port1 = 1, port2 = 2)
+    
+    # core switch connections
+    self.addLink(s5, s1, port1 = 1, port2 = 3)
+    self.addLink(s5, s2, port1 = 2, port2 = 3)
+    self.addLink(s5, s3, port1 = 3, port2 = 3)
+    self.addLink(s5, s4, port1 = 4, port2 = 3)
+
+    self.addLink(s5, trusted_host, port1 = 5, port2 = 1)
+    self.addLink(s5, untrusted_host, port1 = 6, port2 = 1)
+    self.addLink(s5, s6, port1 = 7, port2 = 1)
+    
 
     # IMPORTANT NOTES: 
     # - On a single device, you can only use each port once! So, on s1, only 1 device can be
@@ -75,7 +82,7 @@ def configure():
   topo = final_topo()
   net = Mininet(topo=topo, controller=RemoteController)
   net.start()
-  h10, h20, h30, h40, h50, h60, h70, h80 = net.get('h10', 'h20', 'h30', 'h40','h50', 'h60', 'h70', 'h80')  
+  
   CLI(net)
   
   net.stop()
