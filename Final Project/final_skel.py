@@ -17,10 +17,10 @@ class final_topo(Topo):
     # h1 = self.addHost('h1',mac='00:00:00:00:00:01',ip='1.1.1.1/24', defaultRoute="h1-eth0")
     # h2 = self.addHost('h2',mac='00:00:00:00:00:02',ip='2.2.2.2/24', defaultRoute="h2-eth0")
     # floor 1 hosts
-    h10 = self.addHost('h10',mac='00:00:00:00:00:01',ip='10.0.1.10/24', defaultRoute="h10-eth0")
-    h20 = self.addHost('h20',mac='00:00:00:00:00:02',ip='10.0.2.20/24', defaultRoute="h20-eth0")
-    h30 = self.addHost('h30',mac='00:00:00:00:00:03',ip='10.0.3.30/24', defaultRoute="h30-eth0")
-    h40 = self.addHost('h40',mac='00:00:00:00:00:04',ip='10.0.4.40/24', defaultRoute="h40-eth0")
+    h10 = self.addHost('h10',mac='00:00:00:00:00:01',ip='10.1.1.10/24', defaultRoute="h10-eth0")
+    h20 = self.addHost('h20',mac='00:00:00:00:00:02',ip='10.1.2.20/24', defaultRoute="h20-eth0")
+    h30 = self.addHost('h30',mac='00:00:00:00:00:03',ip='10.1.3.30/24', defaultRoute="h30-eth0")
+    h40 = self.addHost('h40',mac='00:00:00:00:00:04',ip='10.1.4.40/24', defaultRoute="h40-eth0")
     # floor 2 hosts
     h50 = self.addHost('h50',mac='00:00:00:00:00:05',ip='10.2.5.50/24', defaultRoute="h50-eth0")
     h60 = self.addHost('h60',mac='00:00:00:00:00:06',ip='10.2.6.60/24', defaultRoute="h60-eth0")
@@ -46,16 +46,16 @@ class final_topo(Topo):
     self.addLink(server, s6, port1 = 0, port2 = 2)
 
     #floor 1 connections
-    self.addLink(h10, s1, port1 = 1, port2 = 1)
-    self.addLink(h20, s1, port1 = 1, port2 = 2)
-    self.addLink(h30, s2, port1 = 1, port2 = 1)
-    self.addLink(h40, s2, port1 = 1, port2 = 2)
+    self.addLink(h10, s1, port1 = 0, port2 = 1)
+    self.addLink(h20, s1, port1 = 0, port2 = 2)
+    self.addLink(h30, s2, port1 = 0, port2 = 1)
+    self.addLink(h40, s2, port1 = 0, port2 = 2)
     
     #floor 2 connections 
-    self.addLink(h50, s3, port1 = 1, port2 = 1)
-    self.addLink(h60, s3, port1 = 1, port2 = 2)
-    self.addLink(h70, s4, port1 = 1, port2 = 1)
-    self.addLink(h80, s4, port1 = 1, port2 = 2)
+    self.addLink(h50, s3, port1 = 0, port2 = 1)
+    self.addLink(h60, s3, port1 = 0, port2 = 2)
+    self.addLink(h70, s4, port1 = 0, port2 = 1)
+    self.addLink(h80, s4, port1 = 0, port2 = 2)
     
     # core switch connections
     self.addLink(s5, s1, port1 = 1, port2 = 3)
@@ -63,8 +63,8 @@ class final_topo(Topo):
     self.addLink(s5, s3, port1 = 3, port2 = 3)
     self.addLink(s5, s4, port1 = 4, port2 = 3)
 
-    self.addLink(s5, trusted_host, port1 = 5, port2 = 1)
-    self.addLink(s5, untrusted_host, port1 = 6, port2 = 1)
+    self.addLink(s5, trusted_host, port1 = 5, port2 = 0)
+    self.addLink(s5, untrusted_host, port1 = 6, port2 = 0)
     self.addLink(s5, s6, port1 = 7, port2 = 1)
     
 

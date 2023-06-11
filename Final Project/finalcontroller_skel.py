@@ -46,8 +46,14 @@ class Final (object):
 
     # This binds our PacketIn event listener
     connection.addListeners(self)
-
+  
+    
   def do_final (self, packet, packet_in, port_on_switch, switch_id):
+    def send_out(self, packet, packet_in, port1):
+      msg = of.ofp_packet_out()
+      msg.data = packet_in
+      msg.actions.append(of.ofp_action_output(port = port1))
+      self.connection.send(msg)  
     # This is where you'll put your code. The following modifications have 
     # been made from Lab 3:
     #   - port_on_switch: represents the port that the packet was received on.
@@ -55,146 +61,131 @@ class Final (object):
     #      (for example, s1 would have switch_id == 1, s2 would have switch_id == 2, etc...)
     # You should use these to determine where a packet came from. To figure out where a packet 
     # is going, you can use the IP header information.
-    flow_mod = of.ofp_flow_mod()
-    flow_mod.match = of.ofp_match.from_packet(packet)
-    actions = []
-    flow_mod.idle_timeout = 60
-    flow_mod.hard_timeout = 60
+    
     # block all IP traffic from Untrusted Host to Server
     # block all ICMP traffic from Untrusted Host to anywhere internally(host10-80 and server)
     # trusted host can send traffic to hosts in dept A(host10-40) but not sent ICMP and IP traffic to server and hosts in dept B (host50-80)
     # all ICMP traffic from Dept A to Dept B should be blocked and vice versa
-    # switch id ? 
     
     # server: 10.3.9.90/24
     # trusted: 108.24.31.112/24
     # untrusted: 106.44.82.103/24
-    # (switch, src_ip, dst_ip): src_port?
+    #ip = packet.find('ipv4')
+    print("switch_id: ", switch_id)
     ip = packet.find('ipv4')
     if ip is None:
-      actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
-      flow_mod.actions = actions
-      return
+      print("flood")
+      # flow_mod = of.ofp_flow_mod()
+      # flow_mod.match = of.ofp_match.from_packet(packet)
+      # actions = []
+      # flow_mod.idle_timeout = 60
+      # flow_mod.hard_timeout = 60
+      # actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
+      # flow_mod.actions = actions
+      msg = of.ofp_packet_out()
+      msg.data = packet_in
+      msg.idle_timeout = 60
+      msg.hard_timeout = 60
+      msg.actions.append(of.ofp_action_output(port = of.OFPP_FLOOD))
+      self.connection.send(msg)  
     else:
+      
+      
       #A
-      h10 = ['10.0.2.20/24', '10.0.3.30/24','10.0.4.40/24','108.24.31.112/24','10.3.9.90/24']
-      h20 = ['10.0.1.10/24', '10.0.3.30/24','10.0.4.40/24','108.24.31.112/24','10.3.9.90/24']
-      h30 = ['10.0.1.10/24', '10.0.2.20/24','10.0.4.40/24','108.24.31.112/24','10.3.9.90/24']
-      h40 = ['10.0.1.10/24', '10.0.2.20/24','10.0.3.30/24','108.24.31.112/24','10.3.9.90/24']
+      server_ip = '10.3.9.90'
+      h_untrust_ip = '106.44.82.103'
+      h_trust_ip = '108.24.31.112'
+      h10_ip, h20_ip, h30_ip, h40_ip, h50_ip, h60_ip, h70_ip, h80_ip = '10.1.1.10','10.1.2.20', '10.1.3.30','10.1.4.40','10.2.5.50','10.2.6.60', '10.2.7.70','10.2.8.80'
+      h10_dest = [h20_ip, h30_ip,h40_ip,h_trust_ip,server_ip]
+      h20_dest = [h10_ip, h30_ip,h40_ip,h_trust_ip,server_ip]
+      h30_dest = [h10_ip, h20_ip,h40_ip,h_trust_ip,server_ip]
+      h40_dest = [h10_ip, h20_ip,h30_ip,h_trust_ip,server_ip]
 
       #B
-      h50 = ['10.0.6.60/24', '10.0.7.70/24','10.0.8.80/24','108.24.31.112/24']
-      h60 = ['10.0.5.50/24', '10.0.7.70/24','10.0.8.80/24','108.24.31.112/24']
-      h70 = ['10.0.5.50/24', '10.0.6.60/24','10.0.8.80/24','108.24.31.112/24']
-      h80 = ['10.0.5.50/24', '10.0.6.60/24','10.0.7.70/24','108.24.31.112/24']
+      h50_dest = [h60_ip, h70_ip,h80_ip,h_trust_ip]
+      h60_dest = [h50_ip, h70_ip,h80_ip,h_trust_ip]
+      h70_dest = [h50_ip, h60_ip,h80_ip,h_trust_ip]
+      h80_dest = [h50_ip, h60_ip,h70_ip,h_trust_ip]
       
       #h_trust = ['10.0.1.10/24', '10.0.2.20/24', '10.0.3.30/24','10.0.4.40/24']
       #h_untrust = ['10.0.2.20/24', '10.0.3.30/24','10.0.4.40/24','108.24.31.112/24','10.3.9.90/24']
 
-      h_server = ['10.0.2.20/24', '10.0.3.30/24','10.0.4.40/24','108.24.31.112/24','10.3.9.90/24']
+      h_server = [h20_ip, h30_ip, h40_ip, h_trust_ip, server_ip]
       src_ip = ip.srcip
       dst_ip = ip.dstip
+      print("IP_PACKET")
+      print("switch_id: ", switch_id)
+      print("dest: ", dst_ip)
+      print("src: ", src_ip)
+      # flow_mod = of.ofp_flow_mod()
+      # flow_mod.match = of.ofp_match.from_packet(packet)
+      # actions = []
+      # flow_mod.idle_timeout = 60
+      # flow_mod.hard_timeout = 60
       
       if switch_id == 1:
-        #log.debug("Allowing packet")
-        if dst_ip == '10.0.1.10/24':
-          actions.append(of.ofp_action_output(port=1))
-          flow_mod.actions = actions
-          return
-        elif dst_ip == '10.0.2.20/24':
-          actions.append(of.ofp_action_output(port=2))
-          flow_mod.actions = actions
-          return
-        elif (src_ip == '10.0.1.10/24' and dst_ip in h10) or (src_ip == '10.0.2.20/24' and dst_ip in h20):
-          actions.append(of.ofp_action_output(port=3))
-          flow_mod.actions = actions
+        if dst_ip == h10_ip:
+          print("host 10")
+          send_out(packet, packet_in, 1)
+        elif dst_ip == h20_ip:
+          print("host 20")
+          send_out(packet, packet_in, 2)
+        elif (src_ip == h10_ip and dst_ip in h10_dest) or (src_ip == h20_ip and dst_ip in h20_dest):
+          send_out(packet, packet_in, 3)
+        else:
           return
       elif switch_id == 2:
-        #log.debug("Allowing packet")
-        if dst_ip == '10.0.3.30/24':
-          actions.append(of.ofp_action_output(port=1))
-          flow_mod.actions = actions
-          return
-        elif dst_ip == '10.0.4.40/24':
-          actions.append(of.ofp_action_output(port=2))
-          flow_mod.actions = actions
-          return
-        elif (src_ip == '10.0.3.30/24' and dst_ip in h30) or (src_ip == '10.0.4.40/24' and dst_ip in h40):
-          actions.append(of.ofp_action_output(port=3))
-          flow_mod.actions = actions
+        if dst_ip == h30_ip:
+          send_out(packet, packet_in, 1)
+        elif dst_ip == h40_ip:
+          send_out(packet, packet_in, 2)
+        elif (src_ip == h30_ip and dst_ip in h30_dest) or (src_ip == h40_ip and dst_ip in h40_dest):
+          send_out(packet, packet_in, 3) 
+        else:
           return
       elif switch_id == 3:
-        if dst_ip == '10.0.5.50/24':
-          actions.append(of.ofp_action_output(port=1))
-          flow_mod.actions = actions
-          return
-        elif dst_ip == '10.0.6.60/24':
-          actions.append(of.ofp_action_output(port=2))
-          flow_mod.actions = actions
-          return
-        elif (src_ip == '10.0.5.50/24' and dst_ip in h50) or (src_ip == '10.0.6.60/24' and dst_ip in h60):
-          actions.append(of.ofp_action_output(port=3))
-          flow_mod.actions = actions
+        if dst_ip == h50_ip:
+          send_out(packet, packet_in, 1)
+        elif dst_ip == h60_ip:
+          send_out(packet, packet_in, 2)
+        elif (src_ip == h50_ip and dst_ip in h50_dest) or (src_ip == h60_ip and dst_ip in h60_dest):
+          send_out(packet, packet_in, 3)
+        else:
           return
       elif switch_id == 4:
-        if dst_ip == '10.0.7.70/24':
-          actions.append(of.ofp_action_output(port=1))
-          flow_mod.actions = actions
-          return
-        elif dst_ip == '10.0.8.80/24':
-          actions.append(of.ofp_action_output(port=2))
-          flow_mod.actions = actions
-          return
-        elif (src_ip == '10.0.7.70/24' and dst_ip in h70) or (src_ip == '10.0.8.80/24' and dst_ip in h80):
-          actions.append(of.ofp_action_output(port=3))
-          flow_mod.actions = actions
+        if dst_ip == h70_ip:
+          send_out(packet, packet_in, 1)
+        elif dst_ip == h80_ip:
+          send_out(packet, packet_in, 2)
+        elif (src_ip == h70_ip and dst_ip in h70_dest) or (src_ip == h80_ip and dst_ip in h80_dest):
+          send_out(packet, packet_in, 3)
+        else:
           return
       elif switch_id == 5:
-        if src_ip != '106.44.82.103/24':
-          if dst_ip in ['10.0.1.10/24', '10.0.2.20/24']: # to s1
-            actions.append(of.ofp_action_output(port=1))
-            flow_mod.actions = actions
+        if src_ip != h_untrust_ip:
+          if dst_ip in [h10_ip, h20_ip]: # to s1
+            send_out(packet, packet_in, 1)
+          elif dst_ip in [h30_ip, h40_ip]: # to s2
+            send_out(packet, packet_in, 2)
+          elif dst_ip in [h50_ip, h60_ip] and (src_ip != h_trust_ip): # to s3
+            send_out(packet, packet_in, 3)
+          elif dst_ip in [h70_ip,h80_ip] and (src_ip != h_trust_ip): # to s4
+            send_out(packet, packet_in, 4)
+          elif dst_ip == h_trust_ip: # to trusted
+            send_out(packet, packet_in, 5)
+          elif dst_ip == server_ip and (src_ip != h_trust_ip): # to server
+            send_out(packet, packet_in, 7)
+          else:
             return
-          elif dst_ip in ['10.0.3.30/24','10.0.4.40/24']: # to s2
-            actions.append(of.ofp_action_output(port=2))
-            flow_mod.actions = actions
-            return
-          elif dst_ip in ['10.0.5.50/24', '10.0.6.60/24'] and (src_ip != '108.24.31.112/24'): # to s3
-            actions.append(of.ofp_action_output(port=3))
-            flow_mod.actions = actions
-            return
-          elif dst_ip in ['10.0.7.70/24','10.0.8.80/24'] and (src_ip != '108.24.31.112/24'): # to s4
-            actions.append(of.ofp_action_output(port=4))
-            flow_mod.actions = actions
-            return
-        if dst_ip == '108.24.31.112/24': # to trusted
-          actions.append(of.ofp_action_output(port=5))
-          flow_mod.actions = actions
-          return
-        elif dst_ip == '10.3.9.90/24': # to server
-          actions.append(of.ofp_action_output(port=7))
-          flow_mod.actions = actions
-          return
       elif switch_id == 6:
-        if dst_ip == '10.3.9.90/24':
-          actions.append(of.ofp_action_output(port=2))
-          flow_mod.actions = actions
-          return
+        if dst_ip == server_ip:
+          send_out(packet, packet_in, 2)
         elif dst_ip in h_server: 
-          actions.append(of.ofp_action_output(port=1))
-          flow_mod.actions = actions
+          send_out(packet, packet_in, 1)
+        else:
           return
       else:
         return
-
-    # if packet.find('icmp') and packet.find('arp'): # arp packet
-    #     log.debug("Allowing ARP packet")
-    #     actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
-    #     flow_mod.actions = actions
-    # elif packet.find('ipv4') and packet.find('tcp'): # tcp packet
-    #     log.debug("Allowing TCP packet")
-    #     actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
-    #     flow_mod.actions = actions
 
   def _handle_PacketIn (self, event):
     """
